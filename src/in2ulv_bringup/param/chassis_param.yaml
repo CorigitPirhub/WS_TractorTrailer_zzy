@@ -1,0 +1,30 @@
+fps_main: 200
+input_type: 
+
+chassis_param:
+  a0_lp: 0.4
+  torque_cmd_gain: 1
+
+tracker_follow_param:
+  algo: "stanley"
+  k: 1
+
+sliding_ctl_param:
+  c_e: 3
+  c_diff: 0.1
+  c_c: 100
+  u_max: 0.09
+  m: 70
+
+inputter_param:
+  remote:
+    v0_gain: 3.5
+    v0_dead_zone: 0.05
+    v0_lp_para: 0.4
+
+    steering_gain: 30
+    steering_dead_zone: 1
+  follow:
+    v0_gain: 1
+
+    steering_gain: 1

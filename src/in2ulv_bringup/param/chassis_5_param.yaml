@@ -1,0 +1,64 @@
+fps_main: 80
+
+# 公共参数示例
+common:
+  this_chassis: chassis_5
+  chassis_type: Follow
+  follow_chassis: chassis_4
+  behind_chassis: chassis_6
+
+#TODO: 记得修正参数
+chassis_model_param:
+  # 铰链参数在底盘为头车时不其作用
+  body_param:
+    len_l0: 0.467   #HB
+    len_l1: 0.620   #BA
+    len_c: 0.235    #AHN
+  angle_offsetparam:
+    offset_f: 0
+    offset_r: 0
+
+#遥控器相关参数
+remote_offset:
+  offset_v0: 0
+  offset_steering: 0
+    
+# tracker_gen_param:
+#   method: bag_tracker_generater
+#   bag_path: /home/ub/workspc
+#   tracker_topic: 
+#   tracker_len: 1000
+
+
+chassis_ctl_param:
+  motor_positive_direction: false
+  a0_lp: 0.4
+  torque_cmd_gain: 1
+  ang_kp: 0.02
+  ang_ki: 0.03
+  ang_dead_band: 0.045
+  vel_l_kp: 2.4
+  vel_r_kp: 2.5
+
+sliding_ctl_param:
+  c_e: 3
+  c_diff: 0.1
+  c_c: 100
+  u_max: 0.09
+  m: 70
+
+inputter_param:
+  inputter_type: Follow
+  inputter_pub_type: trigger
+  inputter_pub_freq: 0 # 这个参数在发布类型是trigger不生效
+  remote:
+    v0_gain: 3.5
+    v0_dead_zone: 0.05
+    v0_lp_para: 0.4
+
+    steering_gain: 30
+    steering_dead_zone: 1
+  follow:
+    v0_gain: 1
+
+    steering_gain: 1

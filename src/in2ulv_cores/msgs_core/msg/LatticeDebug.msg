@@ -1,0 +1,24 @@
+std_msgs/Header header
+
+float64 trajectory_point_x
+float64 trajectory_point_y
+float64 trajectory_point_theta
+float64 trajectory_point_kappa
+float64 trajectory_point_v
+float64 trajectory_point_a
+
+float64 matched_point_s
+float64 matched_point_x
+float64 matched_point_y
+float64 matched_point_theta
+float64 matched_point_kappa
+float64 matched_point_kappa_prime
+
+float64 s
+float64 s_dot
+float64 s_ddot
+float64 d
+float64 d_prime
+float64 d_pprime
+
+float64 stop_point_distance

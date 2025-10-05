@@ -1,0 +1,36 @@
+<launch>
+    <!-- 机器人名称 -->
+    <arg name="robot_name" default="chassis_1" />
+    <arg name="param_file_name" default="$(arg robot_name)_param.yaml" />
+
+    <!-- 公共参数 -->
+    <rosparam command="load" file="$(find in2ulv_bringup)/config/common_params.yaml" ns="common" />
+
+    <!-- Open Rviz (可选) -->
+    <!-- <arg name="rviz" default="false" />
+    <group if="$(arg rviz)">
+        <node pkg="rviz" type="rviz" name="rviz" args="-d $(find in2ulv_bringup)/rviz/in2ulv_debug.rviz" />
+    </group> -->
+
+    <!-- 各模块启动 -->
+    <include file="$(find in2ulv_bringup)/launch/includes/base.launch">
+        <arg name="robot_name" value="$(arg robot_name)" />
+        <arg name="param_file_path" value="$(find in2ulv_bringup)/param/$(arg param_file_name)" />
+    </include>
+    <!-- <include file="$(find in2ulv_bringup)/launch/includes/control.launch" >
+        <arg name="robot_name" value="$(arg robot_name)" />
+    </include> -->
+    <!-- <include file="$(find in2ulv_bringup)/launch/includes/localization.launch" >
+        <arg name="robot_name" value="$(arg robot_name)" />
+        <arg name="use_mocap" value="false" />
+    </include> -->
+    <!-- <include file="$(find in2ulv_bringup)/launch/includes/perception.launch" >
+        <arg name="robot_name" value="$(arg robot_name)" />
+    </include> -->
+    <!-- <include file="$(find in2ulv_bringup)/launch/includes/planning.launch" >
+        <arg name="robot_name" value="$(arg robot_name)" />
+    </include> -->
+    <!-- <include file="$(find in2ulv_bringup)/launch/includes/decision.launch" >
+        <arg name="robot_name" value="$(arg robot_name)" />
+    </include> -->
+</launch>

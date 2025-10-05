@@ -1,0 +1,3 @@
+# 公共参数示例
+common:
+  robot_name: chassis_1  # 默认机器人名称

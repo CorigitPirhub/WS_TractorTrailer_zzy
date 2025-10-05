@@ -1,0 +1,25 @@
+<launch>
+    <!-- 机器人名称 -->
+    <arg name="robot_name" />
+        <!-- 参数服务器 -->
+        <arg name="param_file_path" default="$(arg robot_name)_param.yaml" />
+        <!-- 是否开启PID调试 -->
+        <arg name="enable_pid_tuning" default="false" />
+        <!-- 假设所有底盘节点都在同一台机器上 -->
+    <group ns="$(arg robot_name)">
+        <!-- 启动遥控器 -->
+        <node pkg="remote_driver" name="remote_driver" type="remote_node" output="screen" />
+        <!-- 期望输入节点 -->
+        <node pkg="in2ulv_controller" name="chassis_cmd_generator" type="chassis_cmd_node" output="screen" />
+        <!-- 启动底盘控制节点 -->
+        <node pkg="in2ulv_controller" name="motion_controller" type="motion_node" output="screen">
+            <param name="enable_pid_tuning" value="$(arg enable_pid_tuning)" />
+        </node>
+        <!-- 启动底盘及角度传感器 -->
+        <node pkg="chassis_driver" name="chassis_driver" type="chassis_node" output="screen">
+        </node>
+        <!-- 加载参数 -->
+        <rosparam command="load" file="$(arg param_file_path)" />
+
+    </group>
+</launch>
