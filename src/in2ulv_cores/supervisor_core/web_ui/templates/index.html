@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ROS 监控面板</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>ROS 监控面板</h1>
+        
+        <div class="dashboard">
+            <div class="panel">
+                <h2>节点状态</h2>
+                <table id="node-table">
+                    <thead>
+                        <tr>
+                            <th>节点名称</th>
+                            <th>状态</th>
+                            <th>最后更新时间</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            
+            <div class="panel">
+                <h2>话题频率</h2>
+                <canvas id="topic-chart"></canvas>
+            </div>
+            
+            <div class="panel">
+                <h2>系统告警</h2>
+                <div id="alert-list"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

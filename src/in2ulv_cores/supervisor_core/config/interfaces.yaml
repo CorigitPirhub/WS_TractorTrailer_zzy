@@ -1,0 +1,21 @@
+interface_version: "1.0.0"
+last_updated: "2025-10-07"
+
+# 规划层 -> 控制层接口
+planning_to_control:
+  topic: "FS_remote_info"
+  msg_type: "msgs_core/remote_info"
+  description: "遥控节点向控制器发送的运动指令"
+  
+  # 参与者约束
+  constraints:
+    publishers: 
+      - "remote_control_node"              # 唯一允许的发布者
+    subscribers:
+      - "chassis_cmd_node"               # 必须的订阅者
+    
+    # 频率约束
+    frequency:
+      expected: 10                   # 期望频率(Hz)
+      min: 0                        # 最低可接受频率(Hz)
+      max: 1000                       # 最高允许频率(Hz)
