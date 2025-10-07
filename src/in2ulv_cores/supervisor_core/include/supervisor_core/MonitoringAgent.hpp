@@ -10,15 +10,16 @@
 
 namespace in2ulv_cores {
 namespace supervisor_core {
-
+/**
+ * @brief 监控代理类
+ * @details 用于节点内部监控，包括记录发布/订阅频率、节点状态等，并定期发布监控指标
+ */
 class MonitoringAgent {
 public:
     MonitoringAgent(ros::NodeHandle& nh, const std::string& node_name);
     
-    // 记录一次消息发布
+    // 记录一次消息发布/订阅
     void recordPublish(const std::string& topic);
-    
-    // 记录一次消息接收
     void recordSubscribe(const std::string& topic);
     
     // 设置节点状态

@@ -5,7 +5,8 @@ TractorCommandInput::TractorCommandInput(ros::NodeHandle& nh)
     : nh_(nh), remote_watchdog_(0), linked_mode_(-1), manual_mode_(-1), 
       speed_mode_(-1), is_follow_same_traj_(-1), remote_v0_(0.0f), 
       remote_steering_(0.0f), steering_tra_(0.0f), self_point_b_yaw_(0.0f),
-      v0_(0.0f), steering_(0.0f) {
+      v0_(0.0f), steering_(0.0f), 
+      monitor_agent_(nh, "in2ulv_controller") {
     
     // 获取参数
     remote_offset_v0_ = in2ulv_cores::utils_core::getParamWithCheck<float>(nh_, "remote_offset/offset_v0", 0.0f);
@@ -24,6 +25,7 @@ TractorCommandInput::TractorCommandInput(ros::NodeHandle& nh)
 }
 
 void TractorCommandInput::remoteCmdCallback(const msgs_core::remote_info::ConstPtr& msg) {
+    monitor_agent_.recordSubscribe("FS_remote_info");
     manual_mode_ = static_cast<int>(msg->ch[6] / 783.0f);
     linked_mode_ = static_cast<int>(msg->ch[7] / 783.0f);
     speed_mode_ = static_cast<int>(msg->ch[8] / 783.0f);
@@ -89,7 +91,8 @@ TrailerCommandInput::TrailerCommandInput(ros::NodeHandle& nh)
       speed_mode_(-1), is_follow_same_traj_(-1), remote_v0_(0.0f), 
       remote_steering_(0.0f), follow_v0_(0.0f), steering_tra_(0.0f), 
       steering_joint_(0.0f), v0_joint_(0.0f), steering_sep_(0.0f), 
-      v0_sep_(0.0f), visual_mode_(0), v0_(0.0f), steering_(0.0f) {
+      v0_sep_(0.0f), visual_mode_(0), v0_(0.0f), steering_(0.0f),
+      monitor_agent_(nh, "in2ulv_controller") {
     
     // 获取参数
     follow_chassis_ = in2ulv_cores::utils_core::getParamWithCheck<std::string>(nh_, "common/follow_chassis", "tractor", "warn");
@@ -116,6 +119,7 @@ TrailerCommandInput::TrailerCommandInput(ros::NodeHandle& nh)
 }
 
 void TrailerCommandInput::remoteCmdCallback(const msgs_core::remote_info::ConstPtr& msg) {
+    monitor_agent_.recordSubscribe("FS_remote_info");
     manual_mode_ = static_cast<int>(msg->ch[6] / 783.0f);
     linked_mode_ = static_cast<int>(msg->ch[7] / 783.0f);
     speed_mode_ = static_cast<int>(msg->ch[8] / 783.0f);

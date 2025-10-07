@@ -5,7 +5,6 @@
         <arg name="param_file_path" default="$(arg robot_name)_param.yaml" />
         <!-- 是否开启PID调试 -->
         <arg name="enable_pid_tuning" default="false" />
-        <!-- 假设所有底盘节点都在同一台机器上 -->
     <group ns="$(arg robot_name)">
         <!-- 启动遥控器 -->
         <node pkg="remote_driver" name="remote_driver" type="remote_node" output="screen" />
@@ -18,8 +17,11 @@
         <!-- 启动底盘及角度传感器 -->
         <node pkg="chassis_driver" name="chassis_driver" type="chassis_node" output="screen">
         </node>
+        <node pkg="supervisor_core" name="supervisor" type="supervisor_node" output="screen">
+            <param name="interface_config" value="$(find supervisor_core)/config/interfaces.yaml"/>
+        </node>
+        <node pkg="supervisor_core" name="web_ui" type="web_server.py" output="screen" />
         <!-- 加载参数 -->
         <rosparam command="load" file="$(arg param_file_path)" />
-
     </group>
 </launch>

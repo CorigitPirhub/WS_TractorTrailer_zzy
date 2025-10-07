@@ -10,7 +10,9 @@
 
 namespace in2ulv_cores {
 namespace supervisor_core {
-
+/**
+ * @brief 监控中心，负责接收监控指标，检查异常并发布警报
+ */
 class CentralMonitor {
 public:
     CentralMonitor(ros::NodeHandle& nh, InterfaceManager& interface_manager);

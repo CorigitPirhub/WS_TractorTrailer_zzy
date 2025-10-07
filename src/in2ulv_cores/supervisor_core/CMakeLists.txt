@@ -4,6 +4,10 @@ project(supervisor_core)
 # 使用C++17标准
 add_compile_options(-std=c++17)
 
+set(yaml-cpp_INCLUDE_DIRS ${YAML_CPP_INCLUDE_DIR})
+set(yaml-cpp_LIBRARIES ${YAML_CPP_LIBRARIES})
+find_package(yaml-cpp REQUIRED)
+
 # 查找catkin和依赖项
 find_package(catkin REQUIRED COMPONENTS
   msgs_core
@@ -12,8 +16,6 @@ find_package(catkin REQUIRED COMPONENTS
   roslib
   std_msgs
 )
-
-find_package(yaml-cpp REQUIRED)
 
 # 设置catkin包信息
 catkin_package(
@@ -28,14 +30,13 @@ catkin_package(
     rospy 
     roslib
     std_msgs
-  DEPENDS yaml-cpp
+  DEPENDS 
 )
 
 # 包含目录
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
-  ${yaml-cpp_INCLUDE_DIRS}
 )
 
 # 声明库
@@ -102,4 +103,19 @@ install(TARGETS supervisor_node
 install(DIRECTORY include/supervisor_core/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
   FILES_MATCHING PATTERN "*.hpp"
+)
+
+# 添加Python节点
+catkin_install_python(PROGRAMS
+  web_ui/web_server.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+# 安装Web文件
+install(DIRECTORY web_ui/templates/
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/web_ui/templates
+)
+
+install(DIRECTORY web_ui/static/
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/web_ui/static
 )
