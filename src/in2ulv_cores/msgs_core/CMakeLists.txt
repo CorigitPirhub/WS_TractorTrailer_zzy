@@ -56,6 +56,13 @@ add_message_files(
   ins570.msg
 )
 
+add_message_files(
+  DIRECTORY system/msg
+  FILES 
+  MonitoringMetric.msg
+  AlertMessage.msg
+)
+
 # 添加服务文件（如果有）
 # file(GLOB srv_files "srv/*.srv")
 # add_service_files(FILES ${srv_files})
