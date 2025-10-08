@@ -18,9 +18,10 @@ app = Flask(__name__,
 socketio = SocketIO(app, async_mode='threading')
 
 # 存储监控数据
-node_data = {}
-topic_data = {}
-alerts = []
+node_data = {}          # 节点状态数据
+publish_data = {}       # 发布数据: {node: {topic: frequency}}
+subscribe_data = {}     # 订阅数据: {node: {topic: frequency}}
+alerts = []             # 告警数据
 lock = threading.Lock()
 
 @app.route('/')
@@ -31,10 +32,11 @@ def index():
 @socketio.on('connect')
 def handle_connect():
     """当客户端连接时，发送当前所有数据"""
-    print('Client connected successfully!')
+    rospy.loginfo('Client connected successfully!')
     with lock:
         socketio.emit('node_update', {'data': node_data})
-        socketio.emit('topic_update', {'data': topic_data})
+        socketio.emit('publish_update', {'data': publish_data})
+        socketio.emit('subscribe_update', {'data': subscribe_data})
         socketio.emit('alert_update', {'data': alerts})
 
 def metric_callback(msg):
@@ -46,21 +48,34 @@ def metric_callback(msg):
                 'status': msg.value,
                 'timestamp': msg.stamp.to_sec()
             }
-        # 处理话题频率
-        elif "publish_frequency" in msg.metric_name:
-            topic_data[msg.topic] = {
-                'publisher': msg.node_name,
-                'frequency': msg.value,
+            # 通过WebSocket发送节点状态更新
+            socketio.emit('node_update', {
+                'node_name': msg.node_name,
+                'status': msg.value,
                 'timestamp': msg.stamp.to_sec()
-            }
-        
-        # 通过WebSocket发送更新
-        socketio.emit('metric_update', {
-            'node_name': msg.node_name,
-            'topic': msg.topic,
-            'metric_name': msg.metric_name,
-            'value': msg.value
-        })
+            })
+        # 处理发布频率
+        elif msg.metric_name == "publish_frequency" and msg.metric_type == "publish":
+            # 初始化节点数据结构
+            if msg.node_name not in publish_data:
+                publish_data[msg.node_name] = {}
+            publish_data[msg.node_name][msg.topic] = msg.value
+            # 发送发布频率更新
+            socketio.emit('publish_update', {
+                'node_name': msg.node_name,
+                'topic': msg.topic,
+                'frequency': msg.value
+            })
+        # 处理订阅频率
+        elif msg.metric_name == "subscribe_frequency" and msg.metric_type == "subscribe":
+            if msg.node_name not in subscribe_data:
+                subscribe_data[msg.node_name] = {}
+            subscribe_data[msg.node_name][msg.topic] = msg.value
+            socketio.emit('subscribe_update', {
+                'node_name': msg.node_name,
+                'topic': msg.topic,
+                'frequency': msg.value
+            })
 
 def alert_callback(msg):
     """处理告警回调"""
@@ -69,7 +84,8 @@ def alert_callback(msg):
         severity_str = {
             AlertMessage.INFO: "info",
             AlertMessage.WARNING: "warning",
-            AlertMessage.ERROR: "error"
+            AlertMessage.ERROR: "error",
+            AlertMessage.CRITICAL: "critical"
         }.get(msg.severity, "unknown")
         
         alert = {

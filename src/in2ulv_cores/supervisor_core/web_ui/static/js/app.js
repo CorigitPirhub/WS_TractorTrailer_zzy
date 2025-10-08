@@ -1,107 +1,66 @@
 // 连接到WebSocket服务器
 const socket = io.connect('http://' + document.domain + ':' + location.port);
 
-// 初始化图表
-const ctx = document.getElementById('topic-chart').getContext('2d');
-const topicChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-        labels: [],
-        datasets: [{
-            label: '发布频率 (Hz)',
-            data: [],
-            backgroundColor: 'rgba(54, 162, 235, 0.5)',
-            borderColor: 'rgba(54, 162, 235, 1)',
-            borderWidth: 1
-        }]
-    },
-    options: {
-        responsive: true,
-        scales: {
-            y: {
-                beginAtZero: true,
-                title: {
-                    display: true,
-                    text: '频率 (Hz)'
-                }
-            },
-            x: {
-                title: {
-                    display: true,
-                    text: '话题名称'
-                }
-            }
+// 存储数据
+let nodeData = {};  // 节点状态数据
+let publishData = {};  // 发布数据: { nodeName: { topic: frequency } }
+let subscribeData = {};  // 订阅数据: { nodeName: { topic: frequency } }
+
+// 处理节点更新
+socket.on('node_update', function(data) {
+    if (data.data) {
+        // 初始化数据
+        nodeData = data.data;
+        updateNodeTable(nodeData);
+    } else {
+        // 更新单个节点
+        updateNodeStatus(data.node_name, data.status, data.timestamp);
+    }
+});
+
+// 处理发布更新
+socket.on('publish_update', function(data) {
+    if (data.data) {
+        // 初始化数据
+        publishData = data.data;
+        renderPublishData();
+    } else {
+        // 更新单个发布项
+        if (!publishData[data.node_name]) {
+            publishData[data.node_name] = {};
         }
+        publishData[data.node_name][data.topic] = data.frequency;
+        renderPublishData();
     }
 });
 
-// 修正事件处理函数 - 提取data字段
-socket.on('node_update', function(response) {
-    console.log('Received node_update:', response);
-    updateNodeTable(response.data);
-});
-
-socket.on('metric_update', function(data) {
-    console.log('Received metric_update:', data);
-    if (data.metric_name === "node_status") {
-        updateNodeStatus(data.node_name, data.value);
-    } else if (data.metric_name.includes("publish_frequency")) {
-        updateTopicFrequency(data.topic, data.value);
+// 处理订阅更新
+socket.on('subscribe_update', function(data) {
+    if (data.data) {
+        // 初始化数据
+        subscribeData = data.data;
+        renderSubscribeData();
+    } else {
+        // 更新单个订阅项
+        if (!subscribeData[data.node_name]) {
+            subscribeData[data.node_name] = {};
+        }
+        subscribeData[data.node_name][data.topic] = data.frequency;
+        renderSubscribeData();
     }
 });
 
-socket.on('topic_update', function(response) {
-    console.log('Received topic_update:', response);
-    updateTopicChart(response.data);
-});
-
+// 处理告警
 socket.on('alert_update', function(response) {
-    console.log('Received alert_update:', response);
     updateAlertList(response.data);
 });
 
 socket.on('new_alert', function(alert) {
-    console.log('Received new_alert:', alert);
     addNewAlert(alert);
 });
 
 // 更新节点表格
-function updateNodeTable(nodeData) {
-    console.log('Updating node table with:', nodeData);
-    
-    const tableBody = document.querySelector('#node-table tbody');
-    tableBody.innerHTML = '';
-    
-    // 检查数据是否有效
-    if (!nodeData || typeof nodeData !== 'object') {
-        const row = document.createElement('tr');
-        row.innerHTML = '<td colspan="3" style="text-align: center; color: #999;">暂无节点数据</td>';
-        tableBody.appendChild(row);
-        return;
-    }
-    
-    for (const [node, info] of Object.entries(nodeData)) {
-        const row = document.createElement('tr');
-        
-        const nodeCell = document.createElement('td');
-        nodeCell.textContent = node;
-        
-        const statusCell = document.createElement('td');
-        statusCell.textContent = getStatusText(info.status);
-        statusCell.className = getStatusClass(info.status);
-        
-        const timeCell = document.createElement('td');
-        timeCell.textContent = formatTime(info.timestamp);
-        
-        row.appendChild(nodeCell);
-        row.appendChild(statusCell);
-        row.appendChild(timeCell);
-        tableBody.appendChild(row);
-    }
-}
-
-// 更新节点状态
-function updateNodeStatus(nodeName, status) {
+function updateNodeStatus(nodeName, status, timestamp) {
     const tableBody = document.querySelector('#node-table tbody');
     let rowFound = false;
     
@@ -110,7 +69,7 @@ function updateNodeStatus(nodeName, status) {
         if (row.cells[0].textContent === nodeName) {
             row.cells[1].textContent = getStatusText(status);
             row.cells[1].className = getStatusClass(status);
-            row.cells[2].textContent = formatTime(Date.now() / 1000);
+            row.cells[2].textContent = formatTime(timestamp);
             rowFound = true;
             break;
         }
@@ -128,7 +87,7 @@ function updateNodeStatus(nodeName, status) {
         statusCell.className = getStatusClass(status);
         
         const timeCell = document.createElement('td');
-        timeCell.textContent = formatTime(Date.now() / 1000);
+        timeCell.textContent = formatTime(timestamp);
         
         row.appendChild(nodeCell);
         row.appendChild(statusCell);
@@ -137,42 +96,124 @@ function updateNodeStatus(nodeName, status) {
     }
 }
 
-// 更新话题图表
-function updateTopicChart(topicData) {
-    console.log('Updating topic chart with:', topicData);
+// 更新节点表格（初始化）
+function updateNodeTable(nodeData) {
+    const tableBody = document.querySelector('#node-table tbody');
+    tableBody.innerHTML = '';
     
-    if (!topicData || typeof topicData !== 'object') {
+    if (!nodeData || Object.keys(nodeData).length === 0) {
+        const row = document.createElement('tr');
+        row.innerHTML = '<td colspan="3" style="text-align: center; color: #999;">暂无节点数据</td>';
+        tableBody.appendChild(row);
         return;
     }
     
-    const topics = Object.keys(topicData);
-    const frequencies = topics.map(topic => topicData[topic].frequency);
-    
-    topicChart.data.labels = topics;
-    topicChart.data.datasets[0].data = frequencies;
-    topicChart.update();
+    for (const [nodeName, info] of Object.entries(nodeData)) {
+        const row = document.createElement('tr');
+        
+        const nodeCell = document.createElement('td');
+        nodeCell.textContent = nodeName;
+        
+        const statusCell = document.createElement('td');
+        statusCell.textContent = getStatusText(info.status);
+        statusCell.className = getStatusClass(info.status);
+        
+        const timeCell = document.createElement('td');
+        timeCell.textContent = formatTime(info.timestamp);
+        
+        row.appendChild(nodeCell);
+        row.appendChild(statusCell);
+        row.appendChild(timeCell);
+        tableBody.appendChild(row);
+    }
 }
 
-// 更新话题频率
-function updateTopicFrequency(topic, frequency) {
-    const topics = topicChart.data.labels;
-    const index = topics.indexOf(topic);
+// 渲染发布数据
+function renderPublishData() {
+    const container = document.getElementById('publish-container');
+    container.innerHTML = '';
     
-    if (index !== -1) {
-        topicChart.data.datasets[0].data[index] = frequency;
-        topicChart.update();
-    } else {
-        // 新话题，添加到图表
-        topics.push(topic);
-        topicChart.data.datasets[0].data.push(frequency);
-        topicChart.update();
+    if (Object.keys(publishData).length === 0) {
+        container.innerHTML = '<div class="no-data">暂无发布数据</div>';
+        return;
+    }
+    
+    for (const [nodeName, topics] of Object.entries(publishData)) {
+        const groupDiv = document.createElement('div');
+        groupDiv.className = 'node-group';
+        
+        // 节点标题
+        const headerDiv = document.createElement('div');
+        headerDiv.className = 'node-header';
+        headerDiv.textContent = nodeName;
+        groupDiv.appendChild(headerDiv);
+        
+        // 话题列表
+        for (const [topic, frequency] of Object.entries(topics)) {
+            const topicRow = document.createElement('div');
+            topicRow.className = 'topic-row';
+            
+            const topicName = document.createElement('div');
+            topicName.className = 'topic-name';
+            topicName.textContent = topic;
+            
+            const topicFreq = document.createElement('div');
+            topicFreq.className = 'topic-freq';
+            topicFreq.textContent = frequency.toFixed(2) + ' Hz';
+            
+            topicRow.appendChild(topicName);
+            topicRow.appendChild(topicFreq);
+            groupDiv.appendChild(topicRow);
+        }
+        
+        container.appendChild(groupDiv);
+    }
+}
+
+// 渲染订阅数据
+function renderSubscribeData() {
+    const container = document.getElementById('subscribe-container');
+    container.innerHTML = '';
+    
+    if (Object.keys(subscribeData).length === 0) {
+        container.innerHTML = '<div class="no-data">暂无订阅数据</div>';
+        return;
+    }
+    
+    for (const [nodeName, topics] of Object.entries(subscribeData)) {
+        const groupDiv = document.createElement('div');
+        groupDiv.className = 'node-group';
+        
+        // 节点标题
+        const headerDiv = document.createElement('div');
+        headerDiv.className = 'node-header';
+        headerDiv.textContent = nodeName;
+        groupDiv.appendChild(headerDiv);
+        
+        // 话题列表
+        for (const [topic, frequency] of Object.entries(topics)) {
+            const topicRow = document.createElement('div');
+            topicRow.className = 'topic-row';
+            
+            const topicName = document.createElement('div');
+            topicName.className = 'topic-name';
+            topicName.textContent = topic;
+            
+            const topicFreq = document.createElement('div');
+            topicFreq.className = 'topic-freq';
+            topicFreq.textContent = frequency.toFixed(2) + ' Hz';
+            
+            topicRow.appendChild(topicName);
+            topicRow.appendChild(topicFreq);
+            groupDiv.appendChild(topicRow);
+        }
+        
+        container.appendChild(groupDiv);
     }
 }
 
 // 更新告警列表
 function updateAlertList(alerts) {
-    console.log('Updating alert list with:', alerts);
-    
     const alertList = document.getElementById('alert-list');
     alertList.innerHTML = '';
     
@@ -257,3 +298,11 @@ function formatTime(timestamp) {
         return "时间解析错误";
     }
 }
+
+// 初始化页面
+document.addEventListener('DOMContentLoaded', function() {
+    // 初始化空表格
+    renderPublishData();
+    renderSubscribeData();
+    updateAlertList([]);
+});

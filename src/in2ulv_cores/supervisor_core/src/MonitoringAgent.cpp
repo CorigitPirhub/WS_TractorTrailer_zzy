@@ -48,6 +48,7 @@ void MonitoringAgent::publishMetrics() {
     status_metric.node_name = node_name_;
     status_metric.topic = "";
     status_metric.metric_name = "node_status";
+    status_metric.metric_type = "";
     status_metric.value = status_copy;
     status_metric.stamp = now; // 设置时间戳
     metrics_pub_.publish(status_metric);
@@ -58,6 +59,7 @@ void MonitoringAgent::publishMetrics() {
         metric.node_name = node_name_;
         metric.topic = pub.first;
         metric.metric_name = "publish_frequency";
+        metric.metric_type = "publish";
         metric.value = (duration > 0) ? (pub.second / duration) : 0;
         metric.stamp = now;
         metrics_pub_.publish(metric);
@@ -69,6 +71,7 @@ void MonitoringAgent::publishMetrics() {
         metric.node_name = node_name_;
         metric.topic = sub.first;
         metric.metric_name = "subscribe_frequency";
+        metric.metric_type = "subscribe";
         metric.value = (duration > 0) ? (sub.second / duration) : 0;
         metric.stamp = now;
         metrics_pub_.publish(metric);
