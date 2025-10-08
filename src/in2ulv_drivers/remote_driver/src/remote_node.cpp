@@ -5,6 +5,14 @@ int main(int argc, char** argv) {
     ros::init(argc, argv, "remote_control_node");
     ros::NodeHandle nh;
     
+    in2ulv_cores::utils_core::global_monitor_agent = 
+        std::make_unique<in2ulv_cores::supervisor_core::MonitoringAgent>(nh, ros::this_node::getName());
+    // 创建定时器，每秒发布一次监控数据
+    ros::Timer metrics_timer = nh.createTimer(ros::Duration(1.0),
+        [](const ros::TimerEvent&) {
+            in2ulv_cores::utils_core::global_monitor_agent->publishMetrics();
+        });
+
     if(ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Info)) {
         ros::console::notifyLoggerLevelsChanged();
     }

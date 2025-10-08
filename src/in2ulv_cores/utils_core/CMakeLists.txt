@@ -9,13 +9,18 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
+  supervisor_core
 )
 
 # 设置catkin包信息
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES utils_core
-  CATKIN_DEPENDS roscpp rospy std_msgs
+  CATKIN_DEPENDS 
+    roscpp
+    rospy
+    std_msgs
+    supervisor_core
   DEPENDS 
 )
 
@@ -31,6 +36,7 @@ add_library(${PROJECT_NAME}
   src/automotive_pid.cpp
   src/spline_interpolator.cpp
   src/filter.cpp
+  src/ros_utils.cpp
 )
 
 # 目标链接库

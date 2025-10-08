@@ -10,8 +10,12 @@
 #include <XmlRpcValue.h>
 #include <stdexcept>
 
+#include "supervisor_core/MonitoringAgent.hpp"
+
 namespace in2ulv_cores {
 namespace utils_core {
+
+extern std::unique_ptr<supervisor_core::MonitoringAgent> global_monitor_agent;
 
 /**
  * @brief ROS实用工具函数集合
@@ -197,7 +201,7 @@ inline std_msgs::Header createHeader(const std::string& frame_id = "") {
  * @param msg 要发布的消息。
  */
 template <typename T>
-void safePublish(const ros::Publisher& publisher, const T& msg) {
+void safePublish(const ros::Publisher& publisher, const T& msg, bool force_publish = false, std::string node_name = ros::this_node::getName()) {
     static std::map<std::string, std::pair<bool, int>> pub_status;
     static std::mutex status_mutex;
     std::string topic_name = publisher.getTopic();
@@ -215,29 +219,47 @@ void safePublish(const ros::Publisher& publisher, const T& msg) {
         pub_status[topic_name].second = current_subscribers;
     }
 
-    if (current_subscribers > 0) {
-        if (!is_publishing) {
-            ROS_INFO("Start publishing topic '%s', subscribers count: %d", 
-                    topic_name.c_str(), current_subscribers);
-            {
-                std::lock_guard<std::mutex> lock(status_mutex);
-                pub_status[topic_name].first = true;
+    if (!force_publish) {
+        if (current_subscribers > 0) {
+            if (!is_publishing) {
+                ROS_INFO("Start publishing topic '%s', subscribers count: %d", 
+                        topic_name.c_str(), current_subscribers);
+                {
+                    std::lock_guard<std::mutex> lock(status_mutex);
+                    pub_status[topic_name].first = true;
+                }
+            }
+            try {
+                // 自动添加的消息监督中心上传
+                if (global_monitor_agent) {
+                    global_monitor_agent->setNodeName(node_name);
+                    global_monitor_agent->recordPublish(topic_name);
+                }
+                publisher.publish(msg);
+            } catch (const ros::Exception& e) {
+                ROS_ERROR_STREAM("Publish error: " << e.what());
+            }
+        } else {
+            if (is_publishing) {
+                ROS_WARN("No subscribers for topic '%s', stop publishing.", topic_name.c_str());
+                {
+                    std::lock_guard<std::mutex> lock(status_mutex);
+                    pub_status[topic_name].first = false;
+                }
             }
         }
+    }
+    else {
         try {
-            publisher.publish(msg);
-        } catch (const ros::serialization::StreamOverrunException& e) {
-            ROS_ERROR_STREAM("Serialization error while publishing message on topic '" 
-                            << topic_name << "': " << e.what());
-        }
-    } else {
-        if (is_publishing) {
-            ROS_WARN("No subscribers for topic '%s', stop publishing.", topic_name.c_str());
-            {
-                std::lock_guard<std::mutex> lock(status_mutex);
-                pub_status[topic_name].first = false;
+            // 自动添加的消息监督中心上传
+            if (global_monitor_agent) {
+                global_monitor_agent->setNodeName(node_name);
+                global_monitor_agent->recordPublish(topic_name);
             }
-        }
+            publisher.publish(msg);
+        } catch (const ros::Exception& e) {
+            ROS_ERROR_STREAM("Publish error: " << e.what());
+        }        
     }
 }
 
@@ -269,6 +291,59 @@ inline std::vector<std::string> getStringVectorFromParam(ros::NodeHandle& nh,
         }
     }
     return result;
+}
+
+/**
+ * @brief 封装 ROS 订阅方法，自动添加消息监督中心上传
+ * 
+ * @tparam M 消息类型
+ * @tparam T 类类型（用于成员函数回调）
+ * @tparam Func 回调函数类型
+ * 
+ * @param nh 节点句柄
+ * @param topic 订阅话题
+ * @param queue_size 队列大小
+ * @param callback 用户回调函数
+ * @param obj 类对象指针（用于成员函数）
+ * 
+ * @return ros::Subscriber 订阅者对象
+ */
+template <typename M, typename T, typename Func>
+ros::Subscriber safeSubscribe(ros::NodeHandle& nh,
+                                 const std::string& topic,
+                                 uint32_t queue_size,
+                                 Func callback,
+                                 T* obj, 
+                                 std::string node_name = ros::this_node::getName()) {
+    // 自动添加的消息监督中心上传
+    if (global_monitor_agent) {
+        global_monitor_agent->setNodeName(node_name);
+        global_monitor_agent->recordSubscribe(topic);
+    }
+    ROS_INFO("Start subscribing to topic '%s' with queue size %d", topic.c_str(), queue_size);
+    // 创建包装回调函数
+    auto wrapped_callback = [callback, topic, obj](const boost::shared_ptr<M const>& msg) {        
+        // 调用原始回调
+        if constexpr (std::is_member_function_pointer_v<Func>) {
+            // 成员函数回调
+            (obj->*callback)(msg);
+        } else {
+            // 普通函数回调
+            callback(msg);
+        }
+    };
+    
+    // 创建订阅者
+    return nh.subscribe<M>(topic, queue_size, wrapped_callback);
+}
+
+// 普通函数版本特化
+template <typename M, typename Func>
+ros::Subscriber safeSubscribe(ros::NodeHandle& nh,
+                                 const std::string& topic,
+                                 uint32_t queue_size,
+                                 Func callback) {
+    return safeSubscribe<M>(nh, topic, queue_size, callback, nullptr);
 }
 
 }  // namespace utils_core

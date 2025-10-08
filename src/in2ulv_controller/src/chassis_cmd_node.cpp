@@ -4,6 +4,14 @@ int main(int argc, char** argv) {
     ros::init(argc, argv, "chassis_cmd_node");
     ros::NodeHandle nh;
     
+    in2ulv_cores::utils_core::global_monitor_agent = 
+        std::make_unique<in2ulv_cores::supervisor_core::MonitoringAgent>(nh, ros::this_node::getName());
+    // 创建定时器，每秒发布一次监控数据
+    ros::Timer metrics_timer = nh.createTimer(ros::Duration(1.0),
+        [](const ros::TimerEvent&) {
+            in2ulv_cores::utils_core::global_monitor_agent->publishMetrics();
+        });
+
     // 获取底盘类型参数
     std::string chassis_type;
     try {

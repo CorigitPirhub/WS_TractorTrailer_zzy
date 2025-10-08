@@ -25,8 +25,8 @@ public:
     // 设置节点状态
     void setNodeStatus(double status);
     
-    // 获取节点名称
-    std::string getNodeName() const { return node_name_; }
+    // 设置节点名称
+    void setNodeName(const std::string& node_name);
     
     // 发布监控指标
     void publishMetrics();

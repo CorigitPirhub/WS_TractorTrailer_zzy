@@ -12,8 +12,11 @@ TractorCommandInput::TractorCommandInput(ros::NodeHandle& nh)
     remote_offset_steering_ = in2ulv_cores::utils_core::getParamWithCheck<float>(nh_, "remote_offset/offset_steering", 0.0f);
     
     // 初始化订阅者和发布者
-    remote_info_sub_ = nh_.subscribe("FS_remote_info", 10, 
-                                    &TractorCommandInput::remoteCmdCallback, this);
+    // remote_info_sub_ = nh_.subscribe("FS_remote_info", 10, 
+    //                                 &TractorCommandInput::remoteCmdCallback, this);
+    remote_info_sub_ = in2ulv_cores::utils_core::safeSubscribe<msgs_core::remote_info>(
+        nh_, "FS_remote_info", 10, &TractorCommandInput::remoteCmdCallback, this
+    );
     ackermann_cmd_tra_sub_ = nh_.subscribe("ackermann_cmd_tra", 10, 
                                           &TractorCommandInput::ackermannCmdTraCallback, this);
     point_b_sub_ = nh_.subscribe("Point_B", 10, 

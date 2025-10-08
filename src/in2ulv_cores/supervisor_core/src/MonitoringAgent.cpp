@@ -20,6 +20,11 @@ void MonitoringAgent::recordSubscribe(const std::string& topic) {
     subscribe_counts_[topic]++;
 }
 
+void MonitoringAgent::setNodeName(const std::string& node_name) {
+    boost::mutex::scoped_lock lock(mutex_);
+    node_name_ = node_name;
+}
+
 void MonitoringAgent::setNodeStatus(double status) {
     boost::mutex::scoped_lock lock(mutex_);
     node_status_ = status;
