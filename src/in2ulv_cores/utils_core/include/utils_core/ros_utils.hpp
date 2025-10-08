@@ -219,6 +219,8 @@ void safePublish(const ros::Publisher& publisher, const T& msg, bool force_publi
         pub_status[topic_name].second = current_subscribers;
     }
 
+    std::string msg_type = ros::message_traits::DataType<T>::value();
+
     if (!force_publish) {
         if (current_subscribers > 0) {
             if (!is_publishing) {
@@ -233,6 +235,7 @@ void safePublish(const ros::Publisher& publisher, const T& msg, bool force_publi
                 // 自动添加的消息监督中心上传
                 if (global_monitor_agent) {
                     global_monitor_agent->setNodeName(node_name);
+                    global_monitor_agent->setMessageType(msg_type);
                     global_monitor_agent->recordPublish(topic_name);
                 }
                 publisher.publish(msg);
@@ -254,6 +257,7 @@ void safePublish(const ros::Publisher& publisher, const T& msg, bool force_publi
             // 自动添加的消息监督中心上传
             if (global_monitor_agent) {
                 global_monitor_agent->setNodeName(node_name);
+                global_monitor_agent->setMessageType(msg_type);
                 global_monitor_agent->recordPublish(topic_name);
             }
             publisher.publish(msg);
@@ -315,9 +319,11 @@ ros::Subscriber safeSubscribe(ros::NodeHandle& nh,
                                  Func callback,
                                  T* obj, 
                                  std::string node_name = ros::this_node::getName()) {
+    std::string msg_type = ros::message_traits::DataType<M>::value();                                
     // 自动添加的消息监督中心上传
     if (global_monitor_agent) {
         global_monitor_agent->setNodeName(node_name);
+        global_monitor_agent->setMessageType(msg_type);
         global_monitor_agent->recordSubscribe(topic);
     }
     ROS_INFO("Start subscribing to topic '%s' with queue size %d", topic.c_str(), queue_size);

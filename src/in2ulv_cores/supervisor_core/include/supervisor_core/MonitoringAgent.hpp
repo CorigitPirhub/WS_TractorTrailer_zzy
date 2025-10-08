@@ -27,6 +27,9 @@ public:
     
     // 设置节点名称
     void setNodeName(const std::string& node_name);
+
+    // 设置消息类型
+    void setMessageType(const std::string& msg_type);
     
     // 发布监控指标
     void publishMetrics();
@@ -34,6 +37,7 @@ public:
 private:
     ros::NodeHandle nh_;
     std::string node_name_;
+    std::string msg_type_;
     ros::Publisher metrics_pub_;
     
     // 用于频率统计
