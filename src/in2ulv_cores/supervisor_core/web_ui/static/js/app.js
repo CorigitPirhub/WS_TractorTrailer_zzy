@@ -35,12 +35,14 @@ const topicChart = new Chart(ctx, {
     }
 });
 
-// 处理节点更新
-socket.on('node_update', function(data) {
-    updateNodeTable(data);
+// 修正事件处理函数 - 提取data字段
+socket.on('node_update', function(response) {
+    console.log('Received node_update:', response);
+    updateNodeTable(response.data);
 });
 
 socket.on('metric_update', function(data) {
+    console.log('Received metric_update:', data);
     if (data.metric_name === "node_status") {
         updateNodeStatus(data.node_name, data.value);
     } else if (data.metric_name.includes("publish_frequency")) {
@@ -48,24 +50,35 @@ socket.on('metric_update', function(data) {
     }
 });
 
-// 处理话题更新
-socket.on('topic_update', function(data) {
-    updateTopicChart(data);
+socket.on('topic_update', function(response) {
+    console.log('Received topic_update:', response);
+    updateTopicChart(response.data);
 });
 
-// 处理告警更新
-socket.on('alert_update', function(data) {
-    updateAlertList(data);
+socket.on('alert_update', function(response) {
+    console.log('Received alert_update:', response);
+    updateAlertList(response.data);
 });
 
 socket.on('new_alert', function(alert) {
+    console.log('Received new_alert:', alert);
     addNewAlert(alert);
 });
 
 // 更新节点表格
 function updateNodeTable(nodeData) {
+    console.log('Updating node table with:', nodeData);
+    
     const tableBody = document.querySelector('#node-table tbody');
     tableBody.innerHTML = '';
+    
+    // 检查数据是否有效
+    if (!nodeData || typeof nodeData !== 'object') {
+        const row = document.createElement('tr');
+        row.innerHTML = '<td colspan="3" style="text-align: center; color: #999;">暂无节点数据</td>';
+        tableBody.appendChild(row);
+        return;
+    }
     
     for (const [node, info] of Object.entries(nodeData)) {
         const row = document.createElement('tr');
@@ -126,6 +139,12 @@ function updateNodeStatus(nodeName, status) {
 
 // 更新话题图表
 function updateTopicChart(topicData) {
+    console.log('Updating topic chart with:', topicData);
+    
+    if (!topicData || typeof topicData !== 'object') {
+        return;
+    }
+    
     const topics = Object.keys(topicData);
     const frequencies = topics.map(topic => topicData[topic].frequency);
     
@@ -152,8 +171,18 @@ function updateTopicFrequency(topic, frequency) {
 
 // 更新告警列表
 function updateAlertList(alerts) {
+    console.log('Updating alert list with:', alerts);
+    
     const alertList = document.getElementById('alert-list');
     alertList.innerHTML = '';
+    
+    if (!alerts || alerts.length === 0) {
+        const noAlertItem = document.createElement('div');
+        noAlertItem.className = 'alert-item alert-info';
+        noAlertItem.innerHTML = '<div class="alert-header">系统状态</div><div>暂无告警信息</div>';
+        alertList.appendChild(noAlertItem);
+        return;
+    }
     
     for (const alert of alerts) {
         addAlertToDOM(alert);
@@ -197,22 +226,34 @@ function addAlertToDOM(alert) {
 
 // 获取状态文本
 function getStatusText(status) {
-    if (status === 0) return '正常';
-    if (status === 1) return '警告';
-    if (status === 2) return '错误';
+    if (status === 0 || status === 0.0) return '正常';
+    if (status === 1 || status === 1.0) return '警告';
+    if (status === 2 || status === 2.0) return '错误';
     return '未知';
 }
 
 // 获取状态类名
 function getStatusClass(status) {
-    if (status === 0) return 'status-normal';
-    if (status === 1) return 'status-warning';
-    if (status === 2) return 'status-error';
+    if (status === 0 || status === 0.0) return 'status-normal';
+    if (status === 1 || status === 1.0) return 'status-warning';
+    if (status === 2 || status === 2.0) return 'status-error';
     return '';
 }
 
 // 格式化时间
 function formatTime(timestamp) {
-    const date = new Date(timestamp * 1000);
-    return date.toLocaleTimeString();
+    if (!timestamp || isNaN(timestamp)) {
+        return "未更新";
+    }
+    
+    try {
+        // ROS时间戳是秒，需要乘以1000转换为毫秒
+        const date = new Date(timestamp * 1000);
+        if (isNaN(date.getTime())) {
+            return "时间格式错误";
+        }
+        return date.toLocaleTimeString();
+    } catch (e) {
+        return "时间解析错误";
+    }
 }

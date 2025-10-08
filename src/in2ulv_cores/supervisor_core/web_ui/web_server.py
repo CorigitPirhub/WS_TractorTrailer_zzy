@@ -31,6 +31,7 @@ def index():
 @socketio.on('connect')
 def handle_connect():
     """当客户端连接时，发送当前所有数据"""
+    print('Client connected successfully!')
     with lock:
         socketio.emit('node_update', {'data': node_data})
         socketio.emit('topic_update', {'data': topic_data})
