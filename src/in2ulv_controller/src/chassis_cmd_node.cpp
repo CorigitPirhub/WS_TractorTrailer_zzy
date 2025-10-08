@@ -21,15 +21,9 @@ int main(int argc, char** argv) {
     auto command_input = in2ulv_controller::CommandInputFactory::createInstance(chassis_type, nh);
     
     ros::Rate rate(100);  // 100Hz
-    ros::Time last_metric_time = ros::Time::now();
     while (ros::ok()) {
         command_input->processData();
         command_input->publishCommands();
-        // 定期发布监控指标（每秒一次）
-        if ((ros::Time::now() - last_metric_time).toSec() >= 1.0) {
-            command_input->publishAgentMetrics();
-            last_metric_time = ros::Time::now();
-        }
         ros::spinOnce();
         rate.sleep();
     }

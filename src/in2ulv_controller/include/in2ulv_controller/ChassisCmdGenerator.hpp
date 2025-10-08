@@ -9,7 +9,6 @@
 
 #include "utils_core/angle_utils.hpp"
 #include "utils_core/ros_utils.hpp"
-#include "supervisor_core/MonitoringAgent.hpp"
 
 namespace in2ulv_controller {
 
@@ -32,11 +31,6 @@ public:
      * @brief 发布控制指令和状态信息
      */
     virtual void publishCommands() = 0;
-
-    /**
-     * @brief 发布监控代理的监控指标
-     */
-    virtual void publishAgentMetrics() = 0;
 };
 
 /**
@@ -51,7 +45,6 @@ public:
     
     void processData() override;
     void publishCommands() override;
-    void publishAgentMetrics() { monitor_agent_.publishMetrics(); }
 
 private:
     void remoteCmdCallback(const msgs_core::remote_info::ConstPtr& msg);
@@ -77,8 +70,6 @@ private:
     float self_point_b_yaw_;
     float v0_;
     float steering_;
-
-    in2ulv_cores::supervisor_core::MonitoringAgent monitor_agent_; // 监控代理
 };
 
 /**
@@ -93,7 +84,6 @@ public:
     
     void processData() override;
     void publishCommands() override;
-    void publishAgentMetrics() { monitor_agent_.publishMetrics(); }
 
 private:
     void remoteCmdCallback(const msgs_core::remote_info::ConstPtr& msg);
@@ -132,8 +122,6 @@ private:
     float v0_;
     float steering_;
     std::string follow_chassis_;
-
-    in2ulv_cores::supervisor_core::MonitoringAgent monitor_agent_; // 监控代理
 };
 
 /**

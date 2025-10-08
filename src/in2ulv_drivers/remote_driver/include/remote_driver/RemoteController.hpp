@@ -7,7 +7,6 @@
 #include "msgs_core/car_state.h"
 #include "msgs_core/angles.h"
 #include "utils_core/ros_utils.hpp"
-#include "supervisor_core/MonitoringAgent.hpp"
 
 namespace in2ulv_drivers {
 namespace remote_driver {
@@ -108,7 +107,6 @@ private:
     int front_lock_state_ = 0;              // 前车锁状态
 
     ActuatorController* stm32_comm_;         // STM32通信器对象
-    in2ulv_cores::supervisor_core::MonitoringAgent monitor_agent_;  // 监控代理
 };
     
 }  // namespace remote_driver

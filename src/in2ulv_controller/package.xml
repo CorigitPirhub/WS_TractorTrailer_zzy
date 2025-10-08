@@ -51,7 +51,6 @@
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>utils_core</build_depend>
   <build_depend>msgs_core</build_depend>
-  <build_depend>supervisor_core</build_depend>
   <build_depend>roscpp</build_depend>
   <build_depend>rospy</build_depend>
   <build_depend>serial</build_depend>
@@ -59,7 +58,6 @@
   <build_depend>message_filters</build_depend>
   <build_export_depend>utils_core</build_export_depend>
   <build_export_depend>msgs_core</build_export_depend>
-  <build_export_depend>supervisor_core</build_export_depend>
   <build_export_depend>roscpp</build_export_depend>
   <build_export_depend>rospy</build_export_depend>
   <build_export_depend>serial</build_export_depend>
@@ -67,7 +65,6 @@
   <build_export_depend>message_filters</build_export_depend>
   <exec_depend>utils_core</exec_depend>
   <exec_depend>msgs_core</exec_depend>
-  <exec_depend>supervisor_core</exec_depend>
   <exec_depend>message_runtime</exec_depend>
   <exec_depend>roscpp</exec_depend>
   <exec_depend>rospy</exec_depend>

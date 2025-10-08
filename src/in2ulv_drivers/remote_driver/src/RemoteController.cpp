@@ -9,8 +9,7 @@ namespace in2ulv_drivers {
 namespace remote_driver {
 
 RemoteController::RemoteController(ros::NodeHandle& nh) 
-    : nh_(nh), port_("/dev/ttyACM1"), baudrate_(115200), ang_dead_band_(0.45), stm32_comm_(nullptr), 
-    monitor_agent_(nh, "remote_driver") {
+    : nh_(nh), port_("/dev/ttyACM1"), baudrate_(115200), ang_dead_band_(0.45), stm32_comm_(nullptr) {
     
     ROS_INFO("Initializing RemoteController...");
     
@@ -94,8 +93,6 @@ void RemoteController::run() {
     ros::Rate loop_rate(100); // 100 Hz
     ROS_INFO("Entering main loop");
 
-    ros::Time last_metric_time = ros::Time::now();
-
     while (ros::ok()) {
         // 接收数据
         size_t num = serial_port_.available();
@@ -107,12 +104,6 @@ void RemoteController::run() {
         // 发送数据
         if (stm32_comm_ && angle_sensor_ > -500) {
             stm32_comm_->sendData();
-        }
-        
-        // 定期发布监控指标（每秒一次）
-        if ((ros::Time::now() - last_metric_time).toSec() >= 1.0) {
-            monitor_agent_.publishMetrics();
-            last_metric_time = ros::Time::now();
         }
 
         ros::spinOnce();
@@ -161,7 +152,6 @@ void RemoteController::processResponse() {
         }
         remote_info_msg_.lock = state_data_.connect;
         in2ulv_cores::utils_core::safePublish(remote_pub_, remote_info_msg_);
-        monitor_agent_.recordPublish("FS_remote_info"); // 记录发布事件
         
         // 使用静态变量控制打印频率，每5秒最多打印一次
         static ros::Time last_print_time = ros::Time::now();

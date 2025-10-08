@@ -7,7 +7,6 @@ add_compile_options(-std=c++17)
 # 查找catkin和依赖项
 find_package(catkin REQUIRED COMPONENTS
   msgs_core
-  supervisor_core
   roscpp
   rospy
   serial
@@ -24,7 +23,6 @@ catkin_package(
     ActuatorController
   CATKIN_DEPENDS 
     msgs_core
-    supervisor_core 
     roscpp 
     rospy 
     serial 
