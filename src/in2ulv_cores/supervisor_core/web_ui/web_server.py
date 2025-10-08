@@ -19,8 +19,8 @@ socketio = SocketIO(app, async_mode='threading')
 
 # 存储监控数据
 node_data = {}          # 节点状态数据
-publish_data = {}       # 发布数据: {node: {topic: frequency}}
-subscribe_data = {}     # 订阅数据: {node: {topic: frequency}}
+publish_data = {}       # 发布数据: {node: {topic: {msg_type: type, frequency: value}}}
+subscribe_data = {}     # 订阅数据: {node: {topic: {msg_type: type, frequency: value}}}
 alerts = []             # 告警数据
 lock = threading.Lock()
 
@@ -59,21 +59,29 @@ def metric_callback(msg):
             # 初始化节点数据结构
             if msg.node_name not in publish_data:
                 publish_data[msg.node_name] = {}
-            publish_data[msg.node_name][msg.topic] = msg.value
+            publish_data[msg.node_name][msg.topic] = {
+                'msg_type': msg.msg_type,
+                'frequency': msg.value
+            }
             # 发送发布频率更新
             socketio.emit('publish_update', {
                 'node_name': msg.node_name,
                 'topic': msg.topic,
+                'msg_type': msg.msg_type,
                 'frequency': msg.value
             })
         # 处理订阅频率
         elif msg.metric_name == "subscribe_frequency" and msg.metric_type == "subscribe":
             if msg.node_name not in subscribe_data:
                 subscribe_data[msg.node_name] = {}
-            subscribe_data[msg.node_name][msg.topic] = msg.value
+            subscribe_data[msg.node_name][msg.topic] = {
+                'msg_type': msg.msg_type,
+                'frequency': msg.value
+            }
             socketio.emit('subscribe_update', {
                 'node_name': msg.node_name,
                 'topic': msg.topic,
+                'msg_type': msg.msg_type,
                 'frequency': msg.value
             })
 

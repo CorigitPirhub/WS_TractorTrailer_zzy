@@ -3,8 +3,8 @@ const socket = io.connect('http://' + document.domain + ':' + location.port);
 
 // 存储数据
 let nodeData = {};  // 节点状态数据
-let publishData = {};  // 发布数据: { nodeName: { topic: frequency } }
-let subscribeData = {};  // 订阅数据: { nodeName: { topic: frequency } }
+let publishData = {};  // 发布数据: { nodeName: { topic: { msg_type: type, frequency: value } } }
+let subscribeData = {};  // 订阅数据: { nodeName: { topic: { msg_type: type, frequency: value } } }
 
 // 处理节点更新
 socket.on('node_update', function(data) {
@@ -29,7 +29,10 @@ socket.on('publish_update', function(data) {
         if (!publishData[data.node_name]) {
             publishData[data.node_name] = {};
         }
-        publishData[data.node_name][data.topic] = data.frequency;
+        publishData[data.node_name][data.topic] = {
+            msg_type: data.msg_type,
+            frequency: data.frequency
+        };
         renderPublishData();
     }
 });
@@ -45,7 +48,10 @@ socket.on('subscribe_update', function(data) {
         if (!subscribeData[data.node_name]) {
             subscribeData[data.node_name] = {};
         }
-        subscribeData[data.node_name][data.topic] = data.frequency;
+        subscribeData[data.node_name][data.topic] = {
+            msg_type: data.msg_type,
+            frequency: data.frequency
+        };
         renderSubscribeData();
     }
 });
@@ -148,24 +154,46 @@ function renderPublishData() {
         headerDiv.textContent = nodeName;
         groupDiv.appendChild(headerDiv);
         
-        // 话题列表
-        for (const [topic, frequency] of Object.entries(topics)) {
-            const topicRow = document.createElement('div');
-            topicRow.className = 'topic-row';
-            
-            const topicName = document.createElement('div');
-            topicName.className = 'topic-name';
-            topicName.textContent = topic;
-            
-            const topicFreq = document.createElement('div');
-            topicFreq.className = 'topic-freq';
-            topicFreq.textContent = frequency.toFixed(2) + ' Hz';
-            
-            topicRow.appendChild(topicName);
-            topicRow.appendChild(topicFreq);
-            groupDiv.appendChild(topicRow);
-        }
+        // 创建表格
+        const table = document.createElement('table');
+        table.className = 'topic-table';
         
+        // 表头
+        const thead = document.createElement('thead');
+        const headerRow = document.createElement('tr');
+        const headers = ['话题', '消息类型', '频率'];
+        headers.forEach(text => {
+            const th = document.createElement('th');
+            th.textContent = text;
+            headerRow.appendChild(th);
+        });
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+        
+        // 表格内容
+        const tbody = document.createElement('tbody');
+        for (const [topic, info] of Object.entries(topics)) {
+            const row = document.createElement('tr');
+            
+            // 话题名称
+            const topicCell = document.createElement('td');
+            topicCell.textContent = topic;
+            row.appendChild(topicCell);
+            
+            // 消息类型
+            const typeCell = document.createElement('td');
+            typeCell.textContent = info.msg_type;
+            row.appendChild(typeCell);
+            
+            // 频率
+            const freqCell = document.createElement('td');
+            freqCell.textContent = info.frequency.toFixed(2) + ' Hz';
+            row.appendChild(freqCell);
+            
+            tbody.appendChild(row);
+        }
+        table.appendChild(tbody);
+        groupDiv.appendChild(table);
         container.appendChild(groupDiv);
     }
 }
@@ -190,24 +218,46 @@ function renderSubscribeData() {
         headerDiv.textContent = nodeName;
         groupDiv.appendChild(headerDiv);
         
-        // 话题列表
-        for (const [topic, frequency] of Object.entries(topics)) {
-            const topicRow = document.createElement('div');
-            topicRow.className = 'topic-row';
-            
-            const topicName = document.createElement('div');
-            topicName.className = 'topic-name';
-            topicName.textContent = topic;
-            
-            const topicFreq = document.createElement('div');
-            topicFreq.className = 'topic-freq';
-            topicFreq.textContent = frequency.toFixed(2) + ' Hz';
-            
-            topicRow.appendChild(topicName);
-            topicRow.appendChild(topicFreq);
-            groupDiv.appendChild(topicRow);
-        }
+        // 创建表格
+        const table = document.createElement('table');
+        table.className = 'topic-table';
         
+        // 表头
+        const thead = document.createElement('thead');
+        const headerRow = document.createElement('tr');
+        const headers = ['话题', '消息类型', '频率'];
+        headers.forEach(text => {
+            const th = document.createElement('th');
+            th.textContent = text;
+            headerRow.appendChild(th);
+        });
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+        
+        // 表格内容
+        const tbody = document.createElement('tbody');
+        for (const [topic, info] of Object.entries(topics)) {
+            const row = document.createElement('tr');
+            
+            // 话题名称
+            const topicCell = document.createElement('td');
+            topicCell.textContent = topic;
+            row.appendChild(topicCell);
+            
+            // 消息类型
+            const typeCell = document.createElement('td');
+            typeCell.textContent = info.msg_type;
+            row.appendChild(typeCell);
+            
+            // 频率
+            const freqCell = document.createElement('td');
+            freqCell.textContent = info.frequency.toFixed(2) + ' Hz';
+            row.appendChild(freqCell);
+            
+            tbody.appendChild(row);
+        }
+        table.appendChild(tbody);
+        groupDiv.appendChild(table);
         container.appendChild(groupDiv);
     }
 }
